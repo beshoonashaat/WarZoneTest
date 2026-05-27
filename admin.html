@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الإشعارات | War Zone</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --primary-blue: #38bdf8;
+            --accent-green: #34d399;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* تصميم زجاجي عصري Glassmorphism */
+        .admin-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary-blue);
+            font-size: 1.8rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 14px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+            background: linear-gradient(135deg, #0369a1, #0284c7);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* رسائل الحالة */
+        #status-message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+
+        .success {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        .error {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <h1>📣 إرسال إشعار للمشتركين</h1>
+        
+        <form id="notificationForm" onsubmit="sendPushNotification(event)">
+            <div class="form-group">
+                <label for="title">عنوان الإشعار</label>
+                <input type="text" id="title" placeholder="مثال: مباراة قوية بدأت الآن! ⚽" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="body">نص الإشعار (الرسالة)</label>
+                <textarea id="body" placeholder="مثال: تابع نتيجة مباراة فريق أ ضد فريق ب الحالية في الترتيب مجاناً." required></textarea>
+            </div>
+            
+            <button type="submit" id="submitBtn">إرسال الإشعار فوراً 🚀</button>
+        </form>
+
+        <div id="status-message"></div>
+    </div>
+
+    <script>
+        // لازم يكون نفس الـ Public Key عشان المنظومة تتعرف على بعضها
+const VAPID_PUBLIC_KEY = "BNzit0AtKjV98NKB0QTVt8wpzvpEmxpmCq6PGIbxafoJUwjy7oODmFKoMSjNykAu6vp2ZHXhD4xeLunAD5AkIdo";
+        async function sendPushNotification(event) {
+            event.preventDefault(); // منع الصفحة من إعادة التحميل عند إرسال الفورم
+            
+            const titleInput = document.getElementById('title');
+            const bodyInput = document.getElementById('body');
+            const submitBtn = document.getElementById('submitBtn');
+            const statusDiv = document.getElementById('status-message');
+
+            // تغيير حالة الزرار أثناء الإرسال
+            submitBtn.disabled = true;
+            submitBtn.innerText = "جاري الإرسال الحركي... ⏳";
+            statusDiv.style.display = 'none';
+
+            try {
+                // إرسال البيانات للمسار /send-notification اللي عملناه في الـ FastAPI
+                const response = await fetch('/send-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: titleInput.value,
+                        body: bodyInput.value
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    statusDiv.className = 'status-message success';
+                    statusDiv.innerText = `✅ تم إرسال الإشعار بنجاح إلى ${result.sent_to} مستخدم نشط!`;
+                    statusDiv.style.display = 'block';
+                    
+                    // تفريغ الحقول بعد الإرسال الناجح
+                    titleInput.value = '';
+                    bodyInput.value = '';
+                } else {
+                    throw new Error('فشل السيرفر في معالجة الطلب');
+                }
+
+            } catch (error) {
+                statusDiv.className = 'status-message error';
+                statusDiv.innerText = "❌ حدث خطأ أثناء الاتصال بالسيرفر، تأكد من تشغيله.";
+                statusDiv.style.display = 'block';
+                console.error(error);
+            } finally {
+                // إعادة الزرار لطبيعته
+                submitBtn.disabled = false;
+                submitBtn.innerText = "إرسال الإشعار فوراً 🚀";
+            }
+        }
+    </script>
+</body>
+</html>
