@@ -100,6 +100,8 @@ all_matches_data = {k: [] for k in MATCHES_URLS.keys()}
 async def sync_all_data_loop():
     while True:
         loop = asyncio.get_event_loop()
+
+        # تحديث جداول الترتيب
         for sport, url in SHEET_URLS.items():
             try:
                 response = await loop.run_in_executor(None, requests.get, url)
@@ -107,12 +109,34 @@ async def sync_all_data_loop():
                     response.encoding = 'utf-8'
                     df = pd.read_csv(StringIO(response.text))
                     df.columns = df.columns.str.strip()
+
                     if 'المجموعة' in df.columns and 'نقاط' in df.columns:
                         df['نقاط'] = pd.to_numeric(df['نقاط'], errors='coerce').fillna(0)
                         df = df.sort_values(by=['المجموعة', 'نقاط'], ascending=[True, False])
+
                     df = df.fillna("")
                     all_sports_data[sport] = df.to_dict(orient='records')
-            except Exception as e: print(f"❌ Error in {sport}: {e}")
+                    print(f"✅ Updated standings: {sport} ({len(all_sports_data[sport])} rows)")
+            except Exception as e:
+                print(f"❌ Error in standings {sport}: {e}")
+
+        # تحديث جداول الماتشات اليومية
+        for day, url in MATCHES_URLS.items():
+            try:
+                response = await loop.run_in_executor(None, requests.get, url)
+                if response.status_code == 200:
+                    response.encoding = 'utf-8'
+                    df = pd.read_csv(StringIO(response.text))
+                    df.columns = df.columns.str.strip()
+                    df = df.fillna("")
+
+                    all_matches_data[day] = df.to_dict(orient='records')
+                    print(f"✅ Updated matches: {day} ({len(all_matches_data[day])} rows)")
+                else:
+                    print(f"❌ Matches {day} returned status code: {response.status_code}")
+            except Exception as e:
+                print(f"❌ Error in matches {day}: {e}")
+
         await asyncio.sleep(120)
 
 @app.on_event("startup")
