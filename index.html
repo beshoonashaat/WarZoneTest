@@ -220,6 +220,10 @@
     color: #0f172a;
     width: 120px;
     font-weight: bold;
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: center;
+}
 }
 
 .matches-matrix tr:hover td {
@@ -487,7 +491,7 @@ img {
 
     .matches-table,
     .matches-matrix {
-        min-width: 700px;
+        min-width: 950px;
     }
 
     th, td {
@@ -598,7 +602,7 @@ img {
 
     .matches-table,
     .matches-matrix {
-        min-width: 650px;
+        min-width: 950px;
     }
 }
         
@@ -955,20 +959,29 @@ async function loadMatches(dayName) {
             <div class="table-container">
                 <table class="matches-matrix" id="matchesTable">
                     <thead>
-                        <tr><th> </th><th>Football ⚽</th><th>Dodgeball 🤾🏻</th><th>Volleyball 🏐</th><th>Ultimate 🥏</th></tr>
-                    </thead>
+<tr>
+    <th>التوقيت</th>
+    <th>Football ⚽</th>
+    <th>Dodgeball 🤾🏻</th>
+    <th>Volleyball 🏐</th>
+    <th>Ultimate 🥏</th>
+    <th>Mini Game 1</th>
+    <th>Mini Game 2</th>
+</tr>                    </thead>
                     <tbody>
         `;
 
         data.forEach(row => {
             tableHtml += `
-                <tr>
-                    <td class="time-column"><strong>${row["التوقيت"] || "-"}</strong></td>
-                    <td>${row["Football"] || "-"}</td>
-                    <td>${row["Dodgeball"] || "-"}</td>
-                    <td>${row["Volleyball"] || "-"}</td>
-                    <td>${row["Ultimate Ball"] || "-"}</td>
-                </tr>`;
+             <tr>
+    <td class="time-column" dir="ltr"><strong>${row["التوقيت"] || "-"}</strong></td>
+    <td>${row["Football"] || "-"}</td>
+    <td>${row["Dodgeball"] || "-"}</td>
+    <td>${row["Volleyball"] || "-"}</td>
+    <td>${row["Ultimate Ball"] || "-"}</td>
+    <td>${row["Mini Game 1"] || "-"}</td>
+    <td>${row["Mini Game 2"] || "-"}</td>
+</tr>`;
         });
 
         tableHtml += `</tbody></table></div>`;
